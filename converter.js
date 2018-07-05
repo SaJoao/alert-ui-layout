@@ -54,12 +54,12 @@ class Area {
 
     addButton(button, pos) {
         if(pos) { 
-            buttonsPos.splice(pos, 0, button.id); 
+            this.buttonsPos.splice(pos, 0, button.id); 
         } else {
-            buttonsPos.push(button.id);
+            this.buttonsPos.push(button.id);
         }
 
-        buttons[button.id] = button;
+        this.buttons[button.id] = button;
     }
 
     delButton(button) {
@@ -84,7 +84,7 @@ class Area {
             this.areas[area.id] = area;
         } else {
 
-            parentArea = this.findArea(path);
+            let parentArea = this.findArea(path);
             if(parentArea) {
                 parentArea.addArea(area);
                 return path + "." + area.id;
@@ -123,6 +123,7 @@ class Area {
                 if (area.areas.hasOwnProperty(key)) {
 
                     let childArea = area.areas[key];
+                    //console.log('pathArr    : ', pathArr);
                     if(pathArr[0] === childArea.id) {
     
                         if(pathArr.length === 1) {
@@ -130,7 +131,8 @@ class Area {
                             return area;
                         } else {
                             // Proceed with search at next level removing the first position of the array
-                            return this._findAreaRec(childArea, pathArr.shift());
+                            pathArr.shift()
+                            return this._findAreaRec(childArea, pathArr);
                         }
                     }
                 }
@@ -139,36 +141,6 @@ class Area {
         // List of areas ended without a match: Not Found.
         return null;
     }
-
-   
-
-    x_findAreaRec(area, pathArr) {
-        console.log("pathArr", pathArr);
-        if(this.id === pathArr[0] ) {
-            if(pathArr.length === 1) {
-                // Id matches at last level: Found!
-                return area;
-            } else {
-                if( area.areas ) {
-                    for(childArea in area.areas ) {
-                        // Proceed with search at next level removing the first position of the array
-                        return this._findAreaRec(childArea, pathArr.shift());
-                    }
-                } else {
-                    // No more child areas: Not found
-                    return null;
-                }
-            }
-        } else {
-            // Ids do not match at current level: Not found
-            return null;
-        }
-    }
-    
-
- 
-   
-
 
 
     _validateParams() {
@@ -190,9 +162,9 @@ Button
 Button attributes and the screen action it executes when called
 */
 class Button {
-    constructor(id, label, icon, component) {
+    constructor(id, label, icon, action) {
 
-        if(!validateParams) {
+        if(!this.validateParams()) {
           throw 'Invalid parameters.';
         }
         this.id = id;
@@ -201,6 +173,8 @@ class Button {
         this.action = action;
     }
   
+
+
     validateParams() {
         /*
         1. id is of type String and is mandatory
@@ -244,66 +218,101 @@ processLine = function(line) {
     lineArr = line.split('\t');
 
    
-    processArea(lineArr)
+    processArea(lineArr);
+    processButton(lineArr);
 
 }
 
 /** */
 processArea = function(lineArr) {
 
-    area = getArea(lineArr);
-    // console.log("topArea: ", JSON.stringify(topArea))
+    areaPath = pathMap[lineArr[6]];
+
+    console.log('areaPath', areaPath);
+
+    pathArr = areaPath.split('.');
+    subPathArr = [];
+    subPath = '';
+    
+    pathArr.forEach(function(e){
+        console.log('e: ', e);
+        subPathArr.push(e);
+        console.log('subPathArr: ', subPathArr);
+        subPath = subPathArr.join('.');
+        console.log('subPath: ', subPath);
+
+        if(!topArea.findArea(subPath)) {
+            console.log('Area ' + subPath + ' not found in top area. Creating...');
+            topArea.addArea(getArea(subPath), subPath);
+        } 
+
+    });
+
+
     // Create area if it does not exists yet
-    if(!topArea.findArea(area.id)) {
-        console.log('Area ' + area.id + ' not found in top area. Creating...');
-        topArea.addArea(area);
-    } else {
-        console.log('Area ' + area.id + ' already exists. Nothing to do...');
-    }
+    
 }
 
 
 /**
  * Get area
  */
-getArea = function(lineArr) {
-    area = {}
-    switch(lineArr[6]){
-        case '1':
-        area = new Area('3', 'Logout button area', 1);
-        break;
-        case '2':
-        area =  new Area('10', 'Back button area', 2);
-        break;
-        case '3':
-        area = new Area('5', 'Top menu', 3);
-        area.addArea(new Area('1', 'Top menu left', 3));
-        break;
-        case '4':
-        area = new Area('5', 'Top menu', 3);
-        area.addArea(new Area('2', 'Top menu right', 4));
-        break;
-        case '6':
-        area = new Area('1', 'Personal settings area', 6);
-        break;
-        case '7':
-        area = new Area('12', 'Ok area', 7);
-        break;
-        case '8':
-        area = new Area('4', 'Alerts area', 8);
-        break;
-        case '10':
-        area = new Area('11', 'Bottom menu', 10);
-        area.addArea(new Area('1', 'Bottom menu left', 10));
-        break;
-        case '11':
-        area = new Area('11', 'Bottom menu', 10);
-        area.addArea(new Area('2', 'Bottom menu right', 11));
-        break;
-    }
+getArea = function(path) {
 
-    return area;
+    return new Area(path.split('.').slice(-1), areaMap[path].msg, areaMap[path].pos);
 }
+
+/**
+ * Map screen areas with new model area ids
+ */
+pathMap = { '1': '3', '2': '10', '3': '5.1', '4': '5.2', '6': '1', '7': '12', '8': '4', '10': '11.1', '11': '11.2' }
+
+/**
+ * Properties by area
+ */
+areaMap = { 
+    '1': {'msg': 'Personal settings area', 'pos': 6 },
+    '3': {'msg': 'Logout button area', 'pos': 1 },
+    '4': {'msg': 'Alerts area', 'pos': 8 },     
+    '5': {'msg': 'Top menu', 'pos': 3 }, 
+  '5.1': {'msg': 'Top menu left', 'pos': 3 },
+  '5.2': {'msg': 'Top menu right', 'pos': 4 },
+    '10': {'msg': 'Back button area', 'pos': 2 },            
+    '11': {'msg': 'Bottom menu', 'pos': 10 },
+  '11.1': {'msg': 'Bottom menu left', 'pos': 10 },
+  '11.2': {'msg': 'Bottom menu left', 'pos': 11 },
+    '12': {'msg': 'Ok area', 'pos': 7 }            
+}
+
+
+/** */
+processButton = function(lineArr) {
+
+    button = getButton(lineArr);
+
+    console.log('searching area: ', pathMap[lineArr[6]]);
+    area = topArea.findArea(pathMap[lineArr[6]]);
+
+    area.addButton(button);
+}
+
+camelize = function(str) {
+    return str.replace(/(?:^\w|[A-Z]|\b\w)/g, function(letter, index) {
+      return index == 0 ? letter.toLowerCase() : letter.toUpperCase();
+    }).replace(/\s+/g, '');
+  }
+
+getButton = function(lineArr) {
+
+    // TODO: Based on the exitance of icon: Review!
+    let icon = lineArr[4];
+    if(icon) {
+        button = new Button(camelize(icon), lineArr[11], icon);
+    }
+    return button;
+}
+
+
 
 
 // Input file 
