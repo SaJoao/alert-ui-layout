@@ -25,6 +25,28 @@ class Layout {
 }
 */
 
+/**
+ * Map screen areas with new model area ids
+ */
+pathMap = { '1': '3', '2': '10', '3': '5.1', '4': '5.2', '6': '1', '7': '12', '8': '4', '10': '11.1', '11': '11.2' }
+
+/**
+ * Properties by area
+ */
+areaMap = { 
+    '1': {'msg': 'Personal settings area', 'pos': 6 },
+    '3': {'msg': 'Logout button area', 'pos': 1 },
+    '4': {'msg': 'Alerts area', 'pos': 8 },     
+    '5': {'msg': 'Top menu', 'pos': 3 }, 
+  '5.1': {'msg': 'Top menu left', 'pos': 3 },
+  '5.2': {'msg': 'Top menu right', 'pos': 4 },
+    '10': {'msg': 'Back button area', 'pos': 2 },            
+    '11': {'msg': 'Bottom menu', 'pos': 10 },
+  '11.1': {'msg': 'Bottom menu left', 'pos': 10 },
+  '11.2': {'msg': 'Bottom menu left', 'pos': 11 },
+    '12': {'msg': 'Ok area', 'pos': 7 }            
+}
+
 /*
 Area
 Screen area. Includes an id, its position in the screen, a list of buttons, a list of child areas,
@@ -81,6 +103,7 @@ class Area {
 
         if(!path) {
             // If parent is not provided then add to current  
+            console.log('adding area to topArea: ', area);
             this.areas[area.id] = area;
         } else {
 
@@ -90,6 +113,7 @@ class Area {
                 return path + "." + area.id;
 
             } else {
+                console.log('addArea: path does not exist, returning...');
                 return null;
             }
         }
@@ -123,15 +147,17 @@ class Area {
                 if (area.areas.hasOwnProperty(key)) {
 
                     let childArea = area.areas[key];
-                    //console.log('pathArr    : ', pathArr);
+                    
                     if(pathArr[0] === childArea.id) {
-    
+                        
                         if(pathArr.length === 1) {
                             // Id matches at last level: Found!
                             return area;
                         } else {
                             // Proceed with search at next level removing the first position of the array
                             pathArr.shift()
+                            console.log('childArea.id    : ', childArea.id);
+                            console.log('pathArr         : ', pathArr);
                             return this._findAreaRec(childArea, pathArr);
                         }
                     }
@@ -233,9 +259,10 @@ processArea = function(lineArr) {
     pathArr = areaPath.split('.');
     subPathArr = [];
     subPath = '';
+    parentPath = '';
     
     pathArr.forEach(function(e){
-        console.log('e: ', e);
+        
         subPathArr.push(e);
         console.log('subPathArr: ', subPathArr);
         subPath = subPathArr.join('.');
@@ -243,7 +270,16 @@ processArea = function(lineArr) {
 
         if(!topArea.findArea(subPath)) {
             console.log('Area ' + subPath + ' not found in top area. Creating...');
-            topArea.addArea(getArea(subPath), subPath);
+            console.log('parentPath' ,parentPath);
+            let area = getArea(subPath);
+            topArea.addArea(area, parentPath);
+
+            if(parentPath) {
+                parentPath = parentPath + '.' + area.id;
+            } else {
+                parentPath = subPath;
+            }
+
         } 
 
     });
@@ -259,30 +295,12 @@ processArea = function(lineArr) {
  */
 getArea = function(path) {
 
-    return new Area(path.split('.').slice(-1), areaMap[path].msg, areaMap[path].pos);
+    // The area id is the last segment of the path
+    let areaId = path.split('.').slice(-1)[0];
+    return new Area(areaId, areaMap[path].msg, areaMap[path].pos);
 }
 
-/**
- * Map screen areas with new model area ids
- */
-pathMap = { '1': '3', '2': '10', '3': '5.1', '4': '5.2', '6': '1', '7': '12', '8': '4', '10': '11.1', '11': '11.2' }
 
-/**
- * Properties by area
- */
-areaMap = { 
-    '1': {'msg': 'Personal settings area', 'pos': 6 },
-    '3': {'msg': 'Logout button area', 'pos': 1 },
-    '4': {'msg': 'Alerts area', 'pos': 8 },     
-    '5': {'msg': 'Top menu', 'pos': 3 }, 
-  '5.1': {'msg': 'Top menu left', 'pos': 3 },
-  '5.2': {'msg': 'Top menu right', 'pos': 4 },
-    '10': {'msg': 'Back button area', 'pos': 2 },            
-    '11': {'msg': 'Bottom menu', 'pos': 10 },
-  '11.1': {'msg': 'Bottom menu left', 'pos': 10 },
-  '11.2': {'msg': 'Bottom menu left', 'pos': 11 },
-    '12': {'msg': 'Ok area', 'pos': 7 }            
-}
 
 
 /** */
@@ -290,9 +308,11 @@ processButton = function(lineArr) {
 
     button = getButton(lineArr);
 
-    console.log('searching area: ', pathMap[lineArr[6]]);
-    area = topArea.findArea(pathMap[lineArr[6]]);
+    areaPath = pathMap[lineArr[6]];
 
+    console.log('searching area: ', areaPath);
+    area = topArea.findArea(areaPath);
+    console.log('area: ', area);
     area.addButton(button);
 }
 
