@@ -89,28 +89,30 @@ class Area {
     } 
 
    /**
-     * Add object area to the area specified by path. 
-     * If the path is not provided then add it to this areas.
-     * Returns the path of the added area or null if the provided path does not exist.
+     * Add object area to the area specified by parentPath. 
+     * If the parentPath is not provided then add it to this area.
+     * Returns the path of the added area or null if the provided parentPath does not exist.
      * 
-     * Note that the path is relative to the current area (See findArea method description).
+     * Note that the parentPath is relative to the current area (See findArea method description).
      */
-    addArea(area, path) {
+    addArea(area, parentPath) {
 
         if(!area) {
             return null;
         }
 
-        if(!path) {
+        if(!parentPath || !parentPath.getId()) {
             // If parent is not provided then add to current  
-            console.log('adding area to topArea: ', area);
             this.areas[area.id] = area;
         } else {
 
-            let parentArea = this.findArea(path);
+            let parentArea = this.findArea(parentPath);
             if(parentArea) {
+
                 parentArea.addArea(area);
-                return path + "." + area.id;
+                path = new Path(parentPath.toString());
+                path.append(area.id)
+                return path;
 
             } else {
                 console.log('addArea: path does not exist, returning...');
@@ -137,32 +139,29 @@ class Area {
      */    
     findArea(path) {
 
-        return this._findAreaRec(this, path.split('.'));
-    
+        // Clone path object before calling _findAreaRec because it is changed in 
+        return this._findAreaRec(new Path(path.toString()));
+  
     }
 
-    _findAreaRec(area, pathArr) {
+    _findAreaRec(path) {
+        for (var key in this.areas) {
+            if (this.areas.hasOwnProperty(key)) {
 
-            for (var key in area.areas) {
-                if (area.areas.hasOwnProperty(key)) {
-
-                    let childArea = area.areas[key];
-                    
-                    if(pathArr[0] === childArea.id) {
-                        
-                        if(pathArr.length === 1) {
-                            // Id matches at last level: Found!
-                            return area;
-                        } else {
-                            // Proceed with search at next level removing the first position of the array
-                            pathArr.shift()
-                            console.log('childArea.id    : ', childArea.id);
-                            console.log('pathArr         : ', pathArr);
-                            return this._findAreaRec(childArea, pathArr);
-                        }
+                let childArea = this.areas[key];
+                if(path.getHead() === childArea.id) {
+                    // Remove path head
+                    path.removeHead();
+                    if(path.toString() === '') {
+                        // Id matches at last level: Found!
+                        return childArea;
+                    } else {
+                        // Proceed with search at next level removing the first position of the array
+                        return childArea.findArea(path);
                     }
                 }
             }
+        }
 
         // List of areas ended without a match: Not Found.
         return null;
@@ -220,7 +219,7 @@ Always corresponds to load an area and, optionally, specify which button to acti
 class Action {
     constructor(areaFqn, button) {
 
-        if(!validateParams) {
+        if(!validateParams()) {
           throw 'Invalid parameters.';
         }
         this.areaFqn = areaFqn;
@@ -245,59 +244,143 @@ processLine = function(line) {
 
    
     processArea(lineArr);
-    processButton(lineArr);
+    //processButton(lineArr);
 
 }
 
 /** */
 processArea = function(lineArr) {
 
-    areaPath = pathMap[lineArr[6]];
+    areaPath = new Path(pathMap[lineArr[6]]);
 
-    console.log('areaPath', areaPath);
-
-    pathArr = areaPath.split('.');
-    subPathArr = [];
-    subPath = '';
-    parentPath = '';
+    path = new Path('')
     
-    pathArr.forEach(function(e){
+    areaPath.toArray().forEach(function(e){
         
-        subPathArr.push(e);
-        console.log('subPathArr: ', subPathArr);
-        subPath = subPathArr.join('.');
-        console.log('subPath: ', subPath);
+        path.append(e);
+        parentPath = areaPath.getParent();
 
-        if(!topArea.findArea(subPath)) {
-            console.log('Area ' + subPath + ' not found in top area. Creating...');
-            console.log('parentPath' ,parentPath);
-            let area = getArea(subPath);
+        if(!topArea.findArea(path)) {
+            let area = getArea(path);
             topArea.addArea(area, parentPath);
-
-            if(parentPath) {
-                parentPath = parentPath + '.' + area.id;
-            } else {
-                parentPath = subPath;
-            }
-
         } 
 
     });
-
-
-    // Create area if it does not exists yet
-    
 }
 
+class Path {
+    
+    
 
+    constructor(path) {
+        
+        this.PATH_SEPARATOR = '.';
+
+        if(!this.validateParams(path)) {
+          throw 'Invalid parameters.';
+        }
+        this.path = path;
+    }
+
+    /**
+     * Returns the string represnetation of this path object
+     */
+    toString() {
+        return this.path;
+    }
+
+    /**
+     * Returns the segments of the path as an array
+     */
+    toArray() {
+        return(this.path.split(this.PATH_SEPARATOR));
+    }
+
+    /**
+     * Return last segment 
+     * For instance, if path is 'a.b.c.d', returns d. If path is 'a' returns 'a'
+     * If path is not defined returns ''
+     */
+    getId() {
+
+        if(!this.path)
+            return '';
+
+        return this.path.slice(-1)[0];
+    }
+
+    /**
+     * Return all path except last dot and last segment
+     * For instance, if path is 'a.b.c.d' returns 'a.b.c.d'. If path is 'a' returns ''
+     */
+    getParent() {
+        let parentPathArr = this.toArray();
+        parentPathArr.pop()
+        return new Path(parentPathArr.join(this.PATH_SEPARATOR));
+    }
+
+    /**
+     * Append the provided segment to this path
+     * For instance, if this path is 'a.b' and the segment is 'c.d', this path becomes 'a.b.c.d'
+     */
+    append(segment) {
+
+        if(!this.path) 
+            this.path = segment;
+        else 
+            this.path = this.path + this.PATH_SEPARATOR + segment;
+
+        return this;
+    }
+
+    /**
+     * Get the head (top most segment) from this path
+     * For instance, if this path is 'a.b.c' if returns 'a'
+     * If it is 'a' it returns ''
+     * If it is '' it returns ''
+     */
+    getHead() {
+
+        let pathArr = this.toArray();
+        return pathArr[0];
+    }
+
+    /**
+     * Remove the head (top most segment) from this path
+     * For instance, if this path is 'a.b.c' if becomes 'a.b'
+     * If it is 'a' it becomes ''
+     */
+    removeHead() {
+
+        let pathArr = this.toArray();
+        pathArr.shift()
+        this.setFromArray(pathArr);
+        return this;
+    }
+
+    /**
+     * Updates the value of path from the segments in the provided array
+     */
+    setFromArray(pathArray) {
+        this.path = pathArray.join(this.PATH_SEPARATOR);
+        return this;
+    }
+
+    validateParams(path) {
+        if( typeof path === 'string') 
+            return  true;
+        
+        return false;
+    }    
+}
 /**
  * Get area
  */
 getArea = function(path) {
 
     // The area id is the last segment of the path
-    let areaId = path.split('.').slice(-1)[0];
-    return new Area(areaId, areaMap[path].msg, areaMap[path].pos);
+    let areaId = path.getId();
+    return new Area(areaId, areaMap[path.toString()].msg, areaMap[path.toString()].pos);
 }
 
 
@@ -308,11 +391,11 @@ processButton = function(lineArr) {
 
     button = getButton(lineArr);
 
-    areaPath = pathMap[lineArr[6]];
+    areaPath = new Path(pathMap[lineArr[6]]);
 
-    console.log('searching area: ', areaPath);
+    //console.log('searching area: ', areaPath);
     area = topArea.findArea(areaPath);
-    console.log('area: ', area);
+    //console.log('area: ', area);
     area.addButton(button);
 }
 
@@ -324,7 +407,7 @@ camelize = function(str) {
 
 getButton = function(lineArr) {
 
-    // TODO: Based on the exitance of icon: Review!
+    // TODO: Based on the existence of icon: Review!
     let icon = lineArr[4];
     if(icon) {
         button = new Button(camelize(icon), lineArr[11], icon);
@@ -336,7 +419,8 @@ getButton = function(lineArr) {
 
 
 // Input file 
-let file = process.argv[2];
+// let file = process.argv[2];
+let file = 'tmp002.txt';
 let topAreaId = '0';
 let topAreaDesc = 'Default layout for EDIS';
 
