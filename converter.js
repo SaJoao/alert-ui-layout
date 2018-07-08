@@ -35,7 +35,7 @@ processLine = function(line) {
     lineArr = line.split('\t');
 
     processArea(lineArr);
-    //processButton(lineArr);
+    processButton(lineArr);
 }
 
 /** */
