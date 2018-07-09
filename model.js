@@ -25,8 +25,7 @@ class Layout {
 
 /** 
 Area
-Screen area. Includes an id, its position in the screen, a list of buttons, a list of child areas,
-and optionally a component to load
+Screen area. Includes an id, its position in the screen, a list of buttons, and a list of child areas
 */
 class Area {
     constructor(id, description, pos) {
@@ -43,7 +42,6 @@ class Area {
         this.buttonsPos = [];
         // Child areas map
         this.areas = {};
-        this.component = '';
     }
 
     addButton(button, pos) {
@@ -97,9 +95,6 @@ class Area {
         // TODO: IMPLEMENT
     } 
 
-    setComponent(component) {
-        this.component = component;
-    }  
 
    
    /**
@@ -147,7 +142,6 @@ class Area {
         3. pos is of type int and correspond to a fixed position in the screen
         4. elements of 'buttons' array are of type 'Button'
         5. elements of 'areas' array are of type 'Area'
-        6. component is of type string and identifies the element (swf or crate) to load 
         */
         return  true;
     }
@@ -185,18 +179,25 @@ class Button {
 /*
 Action
 Screen actions, not to be confused with the application actions.
-Always corresponds to load an area and, optionally, specify which button to activated in that area.
+Allows to specify an area to go to, and optionally, a button to activated in that area and/or a component to load.
 */
 class Action {
-    constructor(areaFqn, button) {
+    constructor(areaFqn, button, component) {
 
         if(!validateParams()) {
           throw 'Invalid parameters.';
         }
         this.areaFqn = areaFqn;
         this.button = button;
+        this.component = component;
+        
     }
   
+    setComponent(component) {
+        this.component = component;
+    }  
+
+
     validateParams() {
         /*
         1. areaFqn is the full qualified name of an area (area's ids from the top level area, joined by ".")
@@ -205,6 +206,31 @@ class Action {
         return  true;
     }
 }
+
+/*
+Component
+Component to load. Can be of type Crate, SWF, or external application
+*/
+class Component {
+    constructor(type, id) {
+
+        if(!validateParams()) {
+          throw 'Invalid parameters.';
+        }
+        this.type = type;
+        this.id = id;
+    }
+    
+    validateParams() {
+        /*
+        1. type can be: CRATE, SWF, or EXTERNAL
+        2. id must be of type string
+        */
+        return  true;
+    }
+}
+
+
 
 /** */
 processButton = function(lineArr) {
@@ -221,4 +247,5 @@ processButton = function(lineArr) {
 
 module.exports.Area = Area;
 module.exports.Button = Button;
-module.exports.Action = Area;
+module.exports.Action = Action;
+module.exports.Component = Component;
