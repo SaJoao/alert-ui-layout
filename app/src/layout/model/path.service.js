@@ -2,36 +2,36 @@
     "use strict";
     
     angular.module('layout')
-    .service('PathService', PathService);
+    .service('Path', Path);
     
         
     //    PathService.$inject = ['Path'];
     //    function PathService(Path) {
-    function PathService() {    
+    function Path() {    
         var service = this;
 
         service.constructor = function (path) {
         
-            this.PATH_SEPARATOR = '.';
+            service.PATH_SEPARATOR = '.';
     
-            if(!this.validateParams(path)) {
+            if(!service.validateParams(path)) {
               throw 'Invalid parameters.';
             }
-            this.path = path;
+            service.path = path;
         }
 
         /**
          * Returns the string represnetation of this path object
          */
         service.toString = function () {
-            return this.path;
+            return service.path;
         }
 
         /**
          * Returns the segments of the path as an array
          */
         service.toArray = function () {
-            return(this.path.split(this.PATH_SEPARATOR));
+            return(service.path.split(service.PATH_SEPARATOR));
         }
 
         /**
@@ -41,10 +41,10 @@
          */
         service.getId = function () {
 
-            if(!this.path)
+            if(!service.path)
                 return '';
 
-            let pathArr = this.toArray();    
+            let pathArr = service.toArray();    
             return pathArr.pop();
         }
 
@@ -53,9 +53,9 @@
          * For instance, if path is 'a.b.c.d' returns 'a.b.c'. If path is 'a' returns ''
          */
         service.getParent = function () {
-            let parentPathArr = this.toArray();
+            let parentPathArr = service.toArray();
             parentPathArr.pop()
-            return new Path(parentPathArr.join(this.PATH_SEPARATOR));
+            return new Path(parentPathArr.join(service.PATH_SEPARATOR));
         }
 
         /**
@@ -64,12 +64,12 @@
          */
         service.append = function (segment) {
 
-            if(!this.path) 
-                this.path = segment;
+            if(!service.path) 
+                service.path = segment;
             else 
-                this.path = this.path + this.PATH_SEPARATOR + segment;
+                service.path = service.path + service.PATH_SEPARATOR + segment;
 
-            return this;
+            return service;
         }
 
         /**
@@ -80,7 +80,7 @@
          */
         service.getHead = function () {
 
-            let pathArr = this.toArray();
+            let pathArr = service.toArray();
             return pathArr[0];
         }
 
@@ -91,18 +91,18 @@
          */
         service.removeHead = function () {
 
-            let pathArr = this.toArray();
+            let pathArr = service.toArray();
             pathArr.shift()
-            this.setFromArray(pathArr);
-            return this;
+            service.setFromArray(pathArr);
+            return service;
         }
 
         /**
          * Updates the value of path from the segments in the provided array
          */
         service.setFromArray = function (pathArray) {
-            this.path = pathArray.join(this.PATH_SEPARATOR);
-            return this;
+            service.path = pathArray.join(service.PATH_SEPARATOR);
+            return service;
         }
 
         service.validateParams = function (path) {

@@ -7,39 +7,46 @@
     and optionally a component to load
     */
     angular.module('layout')
-    .service('AreaService', AreaService);
+    .service('Area', Area);
     
     
-    AreaService.$inject = ['Path'];
-    function AreaService(Path) {
+    Area.$inject = ['Path'];
+    function Area(Path) {
         var service = this;
 
         service.constructor = function(id, description, pos) {
 
-            if(!this._validateParams()) {
+            if(!service._validateParams()) {
                 throw 'Invalid parameters.';
             }
-            this.id = id;
-            this.description = description;
-            this.pos = pos;
+            service.id = id;
+            service.description = description;
+            service.pos = pos;
             // Buttons map
-            this.buttons = {};
+            service.buttons = {};
             // Array of button ids to keep track of the buttons' position in the area
-            this.buttonsPos = [];
+            service.buttonsPos = [];
             // Child areas map
-            this.areas = {};
-            this.component = '';
+            service.areas = {};
         }      
 
 
+        service.setButtons = function(buttons, buttonsPos) {
+
+            for (var i = 0; i < buttonsPos.len; i++) {
+
+                service.addButton(buttons[buttonsPos[i]], i);
+            }
+        }
+
         service.addButton = function(button, pos) {
             if(pos) { 
-                this.buttonsPos.splice(pos, 0, button.id); 
+                service.buttonsPos.splice(pos, 0, button.id); 
             } else {
-                this.buttonsPos.push(button.id);
+                service.buttonsPos.push(button.id);
             }
 
-            this.buttons[button.id] = button;
+            service.buttons[button.id] = button;
         }
         
         service.delButton = function(button) {
@@ -61,10 +68,10 @@
 
             if(!parentPath || !parentPath.getId()) {
                 // If parent is not provided then add to current  
-                this.areas[area.id] = area;
+                service.areas[area.id] = area;
             } else {
 
-                let parentArea = this.findArea(parentPath);
+                let parentArea = service.findArea(parentPath);
                 if(parentArea) {
 
                     parentArea.addArea(area);
@@ -83,10 +90,6 @@
             // TODO: IMPLEMENT
         } 
 
-        service.setComponent = function(component) {
-            this.component = component;
-        }  
-
    
         /**
          * The path to an area is a '.' separated string of the ids of the area ancestors in the areas'
@@ -98,15 +101,15 @@
         service.findArea = function(path) {
 
             // Clone path object before calling _findAreaRec because it is changed in 
-            return this._findAreaRec(new Path(path.toString()));
+            return service._findAreaRec(new Path(path.toString()));
     
         }
 
         service._findAreaRec = function(path) {
-            for (var key in this.areas) {
-                if (this.areas.hasOwnProperty(key)) {
+            for (var key in service.areas) {
+                if (service.areas.hasOwnProperty(key)) {
 
-                    let childArea = this.areas[key];
+                    let childArea = service.areas[key];
                     if(path.getHead() === childArea.id) {
                         // Remove path head
                         path.removeHead();
@@ -137,10 +140,12 @@
             */
             return  true;
         }
-    
+        
+
+        return service.constructor;
     }
     
-    return service.constructor;
+   
     
 })();
     

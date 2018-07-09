@@ -10,9 +10,9 @@
 
     service.getLayout = function () {
 
-      jsonDeferred = $q.defer();
+      var jsonDeferred = $q.defer();
 
-      jsonDeferred.resolve(JSON_MOCK);
+      jsonDeferred.resolve(service.JSON_MOCK);
 
       return jsonDeferred.promise;
     }

@@ -9,27 +9,29 @@
     */
 
     angular.module('layout')
-    .service('ButtonService', ButtonService);
+    .service('Action', Action);
     
     
-    //ButtonService.$inject = ['Path'];
-    //function ButtonService(Path) {
-    function ButtonService() {    
+    //ActionService.$inject = ['Path'];
+    //function ActionService(Path) {
+    function Action() {    
         var service = this;
 
-        service.constructor = function(areaFqn, button) {
+        service.constructor = function(areaFqn, button, component) {
 
-            if(!validateParams()) {
+            if(!service.validateParams()) {
               throw 'Invalid parameters.';
             }
-            this.areaFqn = areaFqn;
-            this.button = button;
+            service.areaFqn = areaFqn;
+            service.button = button;
+            service.component = component;
         }
       
         service.validateParams = function() {
             /*
             1. areaFqn is the full qualified name of an area (area's ids from the top level area, joined by ".")
             2. button is of type string. It is optional. If provided should correspond to a valid button id in the provided area.
+            3. component is of type component
             */
             return  true;
         }

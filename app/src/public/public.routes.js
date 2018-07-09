@@ -11,7 +11,7 @@ routeConfig.$inject = ['$stateProvider'];
 function routeConfig ($stateProvider) {
   // Routes
   $stateProvider
-    .state('public', {
+    .state('public', {  
       absract: true,
       templateUrl: 'src/public/public.html'
     })
@@ -19,16 +19,11 @@ function routeConfig ($stateProvider) {
       url: '/',
       templateUrl: 'src/public/home/home.html'
     })
-    .state('public.menu', {
-      url: '/menu',
-      templateUrl: 'src/public/menu/menu.html',
-      controller: 'MenuController',
-      controllerAs: 'menuCtrl',
-      resolve: {
-        menuCategories: ['MenuService', function (MenuService) {
-          return MenuService.getCategories();
-        }]
-      }
+    .state('public.layout', {
+      url: '/layout',
+      templateUrl: 'src/layout/layout.html',
+      controller: 'LayoutController',
+      controllerAs: 'layoutCtrl',
     })
     .state('public.menuitems', {
       url: '/menu/{category}',
